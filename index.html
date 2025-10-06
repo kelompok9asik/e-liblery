@@ -602,3 +602,607 @@
 </body>
 </html>
 
+DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E-Library Publik</title>
+    <!-- Menggunakan Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .page {
+            transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out;
+        }
+        .page.hidden {
+            opacity: 0;
+            transform: scale(0.95);
+            pointer-events: none;
+            position: absolute;
+        }
+        .book-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .book-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        .form-container {
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+        /* Styling untuk background theme */
+        #background-container {
+            position: fixed;
+            inset: 0;
+            z-index: -20;
+            transition: background-image 1s ease-in-out, background-color 1s ease-in-out;
+            background-size: cover;
+            background-position: center;
+        }
+        #background-container::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background-color: rgba(255, 255, 255, 0.1);
+            z-index: -10;
+        }
+        .theme-default {
+            background-color: #f3f4f6;
+            background-image: none;
+        }
+        .theme-nature {
+            background-image: url('https://images.unsplash.com/photo-1441974231531-c6227db76b6e?q=80&w=2560&auto=format&fit=crop');
+        }
+        .theme-beach {
+            background-image: url('https://images.unsplash.com/photo-1507525428034-b723a9ce6890?q=80&w=2670&auto=format&fit=crop');
+        }
+    </style>
+</head>
+<body class="bg-transparent text-gray-800">
+
+    <!-- Kontainer Latar Belakang untuk Tema -->
+    <div id="background-container"></div>
+    
+    <!-- Indikator Loading -->
+    <div id="loading-overlay" class="fixed inset-0 bg-white/50 backdrop-blur-sm flex items-center justify-center z-50">
+        <div class="text-center">
+            <svg class="animate-spin h-10 w-10 text-indigo-600 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+            <p class="mt-2 text-lg font-semibold text-gray-700">Menghubungkan ke server...</p>
+        </div>
+    </div>
+
+
+    <!-- Kontainer Utama Aplikasi -->
+    <div id="app" class="min-h-screen flex items-center justify-center p-4 opacity-0 transition-opacity duration-500">
+
+        <!-- 1. Halaman Login -->
+        <div id="login-page" class="page w-full max-w-md">
+            <div class="bg-white/70 form-container shadow-2xl rounded-2xl p-8">
+                <h1 class="text-3xl font-bold text-center text-gray-800 mb-2">Selamat Datang</h1>
+                <p class="text-center text-gray-600 mb-6">Login ke akun E-Library Publik Anda.</p>
+                <div id="login-error-message" class="hidden bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-md mb-4" role="alert"></div>
+                 <div id="login-success-message" class="hidden bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded-md mb-4" role="alert"></div>
+                <form id="login-form">
+                    <div class="mb-4">
+                        <label for="username" class="block text-gray-700 text-sm font-bold mb-2">Username</label>
+                        <input type="text" id="username" class="shadow-sm appearance-none border rounded-lg w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Masukkan username" required>
+                    </div>
+                    <div class="mb-6">
+                        <label for="password" class="block text-gray-700 text-sm font-bold mb-2">Password</label>
+                        <input type="password" id="password" class="shadow-sm appearance-none border rounded-lg w-full py-3 px-4 text-gray-700 mb-3 leading-tight focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="****" required>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <button id="login-btn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-lg w-full focus:outline-none focus:shadow-outline transition-transform transform hover:scale-105" type="submit">
+                            Login
+                        </button>
+                    </div>
+                </form>
+                <div class="mt-6 text-center">
+                    <p class="text-sm text-gray-600">Belum punya akun? <a href="#" id="show-register-link" class="font-medium text-indigo-600 hover:text-indigo-500">Daftar di sini</a></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. Halaman Registrasi -->
+        <div id="register-page" class="page hidden w-full max-w-md">
+            <div class="bg-white/70 form-container shadow-2xl rounded-2xl p-8">
+                <h1 class="text-3xl font-bold text-center text-gray-800 mb-2">Buat Akun Baru</h1>
+                <p class="text-center text-gray-600 mb-6">Pendaftaran memerlukan persetujuan admin.</p>
+                <div id="register-error-message" class="hidden bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-md mb-4" role="alert"></div>
+                <form id="register-form">
+                    <div class="mb-4">
+                        <label for="reg-username" class="block text-gray-700 text-sm font-bold mb-2">Username</label>
+                        <input type="text" id="reg-username" class="shadow-sm appearance-none border rounded-lg w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-indigo-500" required>
+                    </div>
+                    <div class="mb-6">
+                        <label for="reg-password" class="block text-gray-700 text-sm font-bold mb-2">Password</label>
+                        <input type="password" id="reg-password" class="shadow-sm appearance-none border rounded-lg w-full py-3 px-4 text-gray-700 mb-3 leading-tight focus:outline-none focus:ring-2 focus:ring-indigo-500" required>
+                    </div>
+                    <button class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-lg w-full focus:outline-none focus:shadow-outline transition-transform transform hover:scale-105" type="submit">
+                        Daftar
+                    </button>
+                </form>
+                <div class="mt-6 text-center">
+                    <p class="text-sm text-gray-600">Sudah punya akun? <a href="#" id="show-login-link" class="font-medium text-indigo-600 hover:text-indigo-500">Login di sini</a></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. Halaman Library -->
+        <div id="library-page" class="page hidden w-full max-w-7xl mx-auto">
+            <header class="bg-white/80 backdrop-blur-sm shadow-lg rounded-xl p-4 mb-8 flex flex-wrap justify-between items-center gap-4">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-800">E-Library Publik</h1>
+                    <p id="welcome-message" class="text-gray-600"></p>
+                </div>
+                <button id="logout-btn" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg focus:outline-none focus:shadow-outline transition-transform transform hover:scale-105">
+                    Logout
+                </button>
+            </header>
+
+            <div id="admin-panel" class="hidden space-y-8">
+                <div class="bg-white shadow-lg rounded-xl p-6">
+                    <h2 class="text-xl font-bold mb-4 text-gray-700">Panel Admin: Tambah Buku</h2>
+                    <form id="add-book-form" class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                         <div class="md:col-span-1">
+                            <label for="new-book-title" class="block text-sm font-medium text-gray-700">Judul Buku</label>
+                            <input type="text" id="new-book-title" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" required>
+                        </div>
+                        <div class="md:col-span-1">
+                            <label for="new-book-author" class="block text-sm font-medium text-gray-700">Penulis</label>
+                            <input type="text" id="new-book-author" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" required>
+                        </div>
+                        <div class="md:col-span-1">
+                            <label for="new-book-cover" class="block text-sm font-medium text-gray-700">Unggah Cover</label>
+                            <input type="file" id="new-book-cover" class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100" accept="image/*" required>
+                        </div>
+                        <div class="md:col-span-1">
+                            <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg transition-transform transform hover:scale-105">Tambah Buku</button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="bg-white shadow-lg rounded-xl p-6">
+                    <h2 class="text-xl font-bold mb-4 text-gray-700">Pengaturan Tema Latar</h2>
+                    <div id="theme-selector" class="flex items-center space-x-4">
+                        <label><input type="radio" name="theme" value="default" class="mr-1"> Default</label>
+                        <label><input type="radio" name="theme" value="nature" class="mr-1"> Alam</label>
+                        <label><input type="radio" name="theme" value="beach" class="mr-1"> Pantai</label>
+                    </div>
+                </div>
+
+                <div class="bg-white shadow-lg rounded-xl p-6">
+                    <h2 class="text-xl font-bold mb-4 text-gray-700">Persetujuan Anggota Baru</h2>
+                    <div id="approval-list" class="space-y-3"></div>
+                </div>
+
+                <div class="bg-white shadow-lg rounded-xl p-6">
+                    <h2 class="text-xl font-bold mb-4 text-gray-700">Manajemen Pengguna</h2>
+                    <div id="user-list" class="space-y-3"></div>
+                </div>
+            </div>
+
+            <main class="mt-8">
+                <h2 class="text-3xl font-bold mb-6 text-gray-800">Koleksi Buku</h2>
+                <div id="book-list" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6"></div>
+            </main>
+        </div>
+    </div>
+    
+    <!-- Impor Firebase SDK -->
+    <script type="module">
+        // Import fungsi yang dibutuhkan dari Firebase SDK
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, doc, onSnapshot, addDoc, setDoc, deleteDoc, updateDoc, getDoc, writeBatch } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getStorage, ref, uploadString, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
+
+        // --- ELEMEN DOM ---
+        const loadingOverlay = document.getElementById('loading-overlay');
+        const appContainer = document.getElementById('app');
+        const backgroundContainer = document.getElementById('background-container');
+        const loginPage = document.getElementById('login-page');
+        const registerPage = document.getElementById('register-page');
+        const libraryPage = document.getElementById('library-page');
+        const loginForm = document.getElementById('login-form');
+        const registerForm = document.getElementById('register-form');
+        const loginErrorMessage = document.getElementById('login-error-message');
+        const registerErrorMessage = document.getElementById('register-error-message');
+        const loginSuccessMessage = document.getElementById('login-success-message');
+        const showRegisterLink = document.getElementById('show-register-link');
+        const showLoginLink = document.getElementById('show-login-link');
+        const logoutBtn = document.getElementById('logout-btn');
+        const welcomeMessage = document.getElementById('welcome-message');
+        const bookList = document.getElementById('book-list');
+        const adminPanel = document.getElementById('admin-panel');
+        const addBookForm = document.getElementById('add-book-form');
+        const approvalList = document.getElementById('approval-list');
+        const themeSelector = document.getElementById('theme-selector');
+        const userList = document.getElementById('user-list');
+
+        // --- DATA LOKAL ---
+        let localUsers = {};
+        let localBooks = [];
+        let localPending = [];
+        let currentUser = null;
+        let db, storage; // Variabel global untuk Firestore dan Storage
+
+        // --- FUNGSI UTAMA ---
+        
+        // Fungsi untuk membuat data awal jika database kosong
+        const seedInitialData = async (appId) => {
+            const adminDocRef = doc(db, `artifacts/${appId}/public/data/users`, 'denian');
+            const adminDocSnap = await getDoc(adminDocRef);
+
+            // Hanya jalankan jika admin 'denian' tidak ada
+            if (!adminDocSnap.exists()) {
+                console.log("Database kosong, membuat data awal...");
+                const batch = writeBatch(db);
+
+                // Buat user admin
+                batch.set(adminDocRef, { password: 'prasetya', role: 'admin' });
+
+                // Buat user biasa
+                const userDocRef = doc(db, `artifacts/${appId}/public/data/users`, 'user123');
+                batch.set(userDocRef, { password: 'user123', role: 'user' });
+
+                // Buat koleksi buku awal
+                const defaultBooks = [
+                    { id: 'laskar-pelangi', title: "Laskar Pelangi", author: "Andrea Hirata", cover: "https://i.gr-assets.com/images/S/compressed.photo.goodreads.com/books/1543187372l/28994.jpg", borrowedBy: null },
+                    { id: 'bumi-manusia', title: "Bumi Manusia", author: "Pramoedya Ananta Toer", cover: "https://i.gr-assets.com/images/S/compressed.photo.goodreads.com/books/1582239634l/222927.jpg", borrowedBy: null },
+                    { id: 'cantik-itu-luka', title: "Cantik Itu Luka", author: "Eka Kurniawan", cover: "https://i.gr-assets.com/images/S/compressed.photo.goodreads.com/books/1422498263l/24522434.jpg", borrowedBy: null },
+                    { id: 'pulang', title: "Pulang", author: "Tere Liye", cover: "https://i.gr-assets.com/images/S/compressed.photo.goodreads.com/books/1446995641l/27830865.jpg", borrowedBy: null },
+                    { id: 'negeri-5-menara', title: "Negeri 5 Menara", author: "Ahmad Fuadi", cover: "https://i.gr-assets.com/images/S/compressed.photo.goodreads.com/books/1327124329l/6484399.jpg", borrowedBy: null },
+                    { id: 'sapiens', title: "Sapiens", author: "Yuval Noah Harari", cover: "https://i.gr-assets.com/images/S/compressed.photo.goodreads.com/books/1420585954l/23692271.jpg", borrowedBy: 'user123'},
+                ];
+                
+                defaultBooks.forEach(book => {
+                    const bookDocRef = doc(db, `artifacts/${appId}/public/data/books`, book.id);
+                    batch.set(bookDocRef, { title: book.title, author: book.author, cover: book.cover, borrowedBy: book.borrowedBy });
+                });
+
+                // Jalankan semua operasi tulis
+                await batch.commit();
+                console.log("Data awal berhasil dibuat.");
+            }
+        };
+
+        const initializeAppWithFirebase = async () => {
+            try {
+                // Konfigurasi Firebase (diganti secara otomatis di lingkungan production)
+                const appId = typeof __app_id !== 'undefined' ? __app_id : 'elibrary-local-dev';
+                const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+                
+                if (!firebaseConfig.apiKey) {
+                    throw new Error("Konfigurasi Firebase tidak ditemukan.");
+                }
+
+                const firebaseApp = initializeApp(firebaseConfig);
+                db = getFirestore(firebaseApp);
+                storage = getStorage(firebaseApp);
+                const auth = getAuth(firebaseApp);
+
+                // Autentikasi Pengguna
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+                
+                // PENTING: Cek dan buat data awal jika perlu
+                await seedInitialData(appId);
+
+                // Setup listener real-time
+                setupRealtimeListeners(appId);
+
+                // Sembunyikan loading dan tampilkan aplikasi
+                loadingOverlay.classList.add('hidden');
+                appContainer.classList.remove('opacity-0');
+                showPage('login-page');
+
+            } catch (error) {
+                console.error("Gagal menginisialisasi Firebase:", error);
+                loadingOverlay.innerHTML = `<p class="text-red-500 font-bold">Gagal terhubung ke server. Coba muat ulang halaman.</p>`;
+            }
+        };
+
+        const setupRealtimeListeners = (appId) => {
+            const booksCol = collection(db, `artifacts/${appId}/public/data/books`);
+            const usersCol = collection(db, `artifacts/${appId}/public/data/users`);
+            const pendingCol = collection(db, `artifacts/${appId}/public/data/pendingRegistrations`);
+            const themeDocRef = doc(db, `artifacts/${appId}/public/data/settings`, 'theme');
+
+            onSnapshot(booksCol, (snapshot) => {
+                localBooks = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                if (currentUser) renderBooks();
+            });
+
+            onSnapshot(usersCol, (snapshot) => {
+                localUsers = {};
+                snapshot.docs.forEach(doc => {
+                    localUsers[doc.id] = { id: doc.id, ...doc.data() };
+                });
+                if (currentUser && currentUser.role === 'admin') renderUserList();
+            });
+
+            onSnapshot(pendingCol, (snapshot) => {
+                localPending = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                if (currentUser && currentUser.role === 'admin') renderApprovalList();
+            });
+            
+            onSnapshot(themeDocRef, (doc) => {
+                const theme = doc.exists() ? doc.data().name : 'default';
+                setTheme(theme);
+                const themeRadio = document.querySelector(`input[name="theme"][value="${theme}"]`);
+                if (themeRadio) themeRadio.checked = true;
+            });
+        };
+
+        const showPage = (pageId) => {
+            document.querySelectorAll('.page').forEach(page => page.classList.add('hidden'));
+            document.getElementById(pageId)?.classList.remove('hidden');
+        };
+
+        const setTheme = (theme) => {
+            backgroundContainer.className = `theme-${theme}`;
+        };
+
+        const renderBooks = () => {
+             bookList.innerHTML = '';
+             localBooks.forEach(book => {
+                const isBorrowed = book.borrowedBy !== null;
+                const isBorrowedByCurrentUser = currentUser && book.borrowedBy === currentUser.username;
+
+                const bookCard = document.createElement('div');
+                bookCard.className = `book-card bg-white shadow-lg rounded-xl overflow-hidden group flex flex-col justify-between ${isBorrowed && !isBorrowedByCurrentUser ? 'opacity-50' : ''}`;
+                
+                let actionButtons = '';
+                if (currentUser) {
+                    if (currentUser.role === 'admin') {
+                        actionButtons = `<button data-id="${book.id}" class="delete-btn absolute top-3 right-3 bg-red-600 text-white rounded-full p-2 w-9 h-9 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity focus:outline-none hover:bg-red-700">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                        </button>`;
+                    } else if (currentUser.role === 'user') {
+                        if (isBorrowedByCurrentUser) {
+                            actionButtons = `<button data-id="${book.id}" class="return-btn w-full bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4">Kembalikan</button>`;
+                        } else if (!isBorrowed) {
+                            actionButtons = `<button data-id="${book.id}" class="borrow-btn w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4">Pinjam</button>`;
+                        }
+                    }
+                }
+                
+                let borrowedBadge = '';
+                if(isBorrowed) {
+                    borrowedBadge = `<div class="absolute top-2 left-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full">${isBorrowedByCurrentUser ? 'Dipinjam Anda' : 'Dipinjam'}</div>`
+                }
+
+                bookCard.innerHTML = `
+                    <div>
+                        <div class="relative">
+                            <img src="${book.cover}" alt="Cover ${book.title}" class="w-full h-80 object-cover" onerror="this.onerror=null;this.src='https://placehold.co/400x600/cccccc/ffffff?text=Cover+Error';">
+                            ${actionButtons.includes('delete-btn') ? actionButtons : ''}
+                            ${borrowedBadge}
+                        </div>
+                        <div class="p-4">
+                            <h3 class="font-bold text-md truncate" title="${book.title}">${book.title}</h3>
+                            <p class="text-gray-600 text-sm">${book.author}</p>
+                        </div>
+                    </div>
+                    ${!actionButtons.includes('delete-btn') ? `<div class="mt-auto">${actionButtons}</div>` : ''}
+                `;
+                bookList.appendChild(bookCard);
+            });
+            document.querySelectorAll('.delete-btn').forEach(button => button.addEventListener('click', handleDeleteBook));
+            document.querySelectorAll('.borrow-btn').forEach(button => button.addEventListener('click', handleBorrowBook));
+            document.querySelectorAll('.return-btn').forEach(button => button.addEventListener('click', handleReturnBook));
+        };
+
+        const renderApprovalList = () => {
+            approvalList.innerHTML = '';
+             if (localPending.length === 0) {
+                approvalList.innerHTML = '<p class="text-gray-500">Tidak ada permintaan pendaftaran baru.</p>';
+                return;
+            }
+             localPending.forEach(req => {
+                const item = document.createElement('div');
+                item.className = 'flex justify-between items-center bg-gray-50 p-3 rounded-lg';
+                item.innerHTML = `
+                    <p class="font-medium text-gray-700">${req.username}</p>
+                    <div>
+                        <button data-id="${req.id}" data-username="${req.username}" data-password="${req.password}" class="approve-btn bg-green-500 hover:bg-green-600 text-white text-sm font-bold py-1 px-3 rounded-md mr-2">Setuju</button>
+                        <button data-id="${req.id}" class="reject-btn bg-red-500 hover:bg-red-600 text-white text-sm font-bold py-1 px-3 rounded-md">Tolak</button>
+                    </div>
+                `;
+                approvalList.appendChild(item);
+            });
+            document.querySelectorAll('.approve-btn').forEach(btn => btn.addEventListener('click', handleApproveRequest));
+            document.querySelectorAll('.reject-btn').forEach(btn => btn.addEventListener('click', handleRejectRequest));
+        };
+
+        const renderUserList = () => {
+            userList.innerHTML = '';
+            Object.values(localUsers).forEach(user => {
+                if (user.role !== 'admin') {
+                    const item = document.createElement('div');
+                    item.className = 'flex justify-between items-center bg-gray-50 p-3 rounded-lg';
+                    item.innerHTML = `
+                        <p class="font-medium text-gray-700">${user.id}</p>
+                        <button data-username="${user.id}" class="kick-btn bg-red-500 hover:bg-red-600 text-white text-sm font-bold py-1 px-3 rounded-md">Keluarkan</button>
+                    `;
+                    userList.appendChild(item);
+                }
+            });
+             document.querySelectorAll('.kick-btn').forEach(btn => btn.addEventListener('click', handleKickUser));
+        };
+        
+        // --- HANDLER FUNGSI (INTERAKSI PENGGUNA) ---
+        
+        const handleLogin = (e) => {
+            e.preventDefault();
+            const username = loginForm.username.value;
+            const password = loginForm.password.value;
+            const user = localUsers[username];
+            
+            if (user && user.password === password) {
+                currentUser = { username, role: user.role };
+                showPage('library-page');
+                welcomeMessage.textContent = `Login sebagai: ${currentUser.username} (${currentUser.role})`;
+                
+                if (currentUser.role === 'admin') {
+                    adminPanel.classList.remove('hidden');
+                    renderApprovalList();
+                    renderUserList();
+                }
+                renderBooks();
+                loginErrorMessage.classList.add('hidden');
+                loginSuccessMessage.classList.add('hidden');
+                loginForm.reset();
+            } else {
+                loginErrorMessage.textContent = 'Username atau password salah.';
+                loginErrorMessage.classList.remove('hidden');
+            }
+        };
+        
+        const handleLogout = () => {
+            currentUser = null;
+            showPage('login-page');
+            adminPanel.classList.add('hidden');
+        };
+
+        const handleRegister = async (e) => {
+            e.preventDefault();
+            const username = registerForm['reg-username'].value;
+            const password = registerForm['reg-password'].value;
+            
+            if (localUsers[username] || localPending.some(p => p.username === username)) {
+                registerErrorMessage.textContent = 'Username sudah digunakan.';
+                registerErrorMessage.classList.remove('hidden');
+                return;
+            }
+            
+            const appId = typeof __app_id !== 'undefined' ? __app_id : 'elibrary-local-dev';
+            const pendingCol = collection(db, `artifacts/${appId}/public/data/pendingRegistrations`);
+            await addDoc(pendingCol, { username, password });
+            
+            registerForm.reset();
+            showPage('login-page');
+            loginSuccessMessage.textContent = 'Registrasi berhasil! Silakan tunggu persetujuan admin.';
+            loginSuccessMessage.classList.remove('hidden');
+        };
+        
+        const handleAddBook = async (e) => {
+            e.preventDefault();
+            const title = document.getElementById('new-book-title').value;
+            const author = document.getElementById('new-book-author').value;
+            const coverFile = document.getElementById('new-book-cover').files[0];
+
+            if (coverFile) {
+                const reader = new FileReader();
+                reader.onload = async (event) => {
+                    const coverDataUrl = event.target.result;
+                    const appId = typeof __app_id !== 'undefined' ? __app_id : 'elibrary-local-dev';
+                    
+                    // Unggah gambar ke Firebase Storage
+                    const storageRef = ref(storage, `covers/${appId}/${Date.now()}_${coverFile.name}`);
+                    const snapshot = await uploadString(storageRef, coverDataUrl, 'data_url');
+                    const downloadURL = await getDownloadURL(snapshot.ref);
+
+                    // Simpan info buku ke Firestore
+                    const booksCol = collection(db, `artifacts/${appId}/public/data/books`);
+                    await addDoc(booksCol, { title, author, cover: downloadURL, borrowedBy: null });
+                    
+                    addBookForm.reset();
+                };
+                reader.readAsDataURL(coverFile);
+            }
+        };
+
+        const handleDeleteBook = async (e) => {
+            const bookId = e.currentTarget.dataset.id;
+            const appId = typeof __app_id !== 'undefined' ? __app_id : 'elibrary-local-dev';
+            const bookDocRef = doc(db, `artifacts/${appId}/public/data/books`, bookId);
+            await deleteDoc(bookDocRef);
+        };
+        
+        const handleBorrowBook = async (e) => {
+            if (!currentUser) return;
+            const bookId = e.currentTarget.dataset.id;
+            const appId = typeof __app_id !== 'undefined' ? __app_id : 'elibrary-local-dev';
+            const bookDocRef = doc(db, `artifacts/${appId}/public/data/books`, bookId);
+            await updateDoc(bookDocRef, { borrowedBy: currentUser.username });
+        };
+
+        const handleReturnBook = async (e) => {
+            if (!currentUser) return;
+            const bookId = e.currentTarget.dataset.id;
+             const appId = typeof __app_id !== 'undefined' ? __app_id : 'elibrary-local-dev';
+            const bookDocRef = doc(db, `artifacts/${appId}/public/data/books`, bookId);
+            await updateDoc(bookDocRef, { borrowedBy: null });
+        };
+
+        const handleApproveRequest = async (e) => {
+            const { id, username, password } = e.currentTarget.dataset;
+            const appId = typeof __app_id !== 'undefined' ? __app_id : 'elibrary-local-dev';
+            
+            const batch = writeBatch(db);
+            const userDocRef = doc(db, `artifacts/${appId}/public/data/users`, username);
+            const pendingDocRef = doc(db, `artifacts/${appId}/public/data/pendingRegistrations`, id);
+            
+            batch.set(userDocRef, { password, role: 'user' });
+            batch.delete(pendingDocRef);
+            
+            await batch.commit();
+        };
+
+        const handleRejectRequest = async (e) => {
+            const pendingId = e.currentTarget.dataset.id;
+            const appId = typeof __app_id !== 'undefined' ? __app_id : 'elibrary-local-dev';
+            const pendingDocRef = doc(db, `artifacts/${appId}/public/data/pendingRegistrations`, pendingId);
+            await deleteDoc(pendingDocRef);
+        };
+
+        const handleKickUser = async (e) => {
+            const usernameToKick = e.currentTarget.dataset.username;
+            const appId = typeof __app_id !== 'undefined' ? __app_id : 'elibrary-local-dev';
+            const userDocRef = doc(db, `artifacts/${appId}/public/data/users`, usernameToKick);
+            
+            // Hapus pengguna
+            await deleteDoc(userDocRef);
+
+            // Kembalikan semua buku yang dipinjam oleh pengguna yang dikeluarkan
+            const booksToReturn = localBooks.filter(book => book.borrowedBy === usernameToKick);
+            const batch = writeBatch(db);
+            booksToReturn.forEach(book => {
+                const bookRef = doc(db, `artifacts/${appId}/public/data/books`, book.id);
+                batch.update(bookRef, { borrowedBy: null });
+            });
+            await batch.commit();
+        };
+
+        // --- EVENT LISTENERS ---
+        loginForm.addEventListener('submit', handleLogin);
+        registerForm.addEventListener('submit', handleRegister);
+        logoutBtn.addEventListener('click', handleLogout);
+        addBookForm.addEventListener('submit', handleAddBook);
+        showRegisterLink.addEventListener('click', (e) => { e.preventDefault(); showPage('register-page'); });
+        showLoginLink.addEventListener('click', (e) => { e.preventDefault(); showPage('login-page'); });
+        themeSelector.addEventListener('change', async (e) => {
+            const appId = typeof __app_id !== 'undefined' ? __app_id : 'elibrary-local-dev';
+            const themeDocRef = doc(db, `artifacts/${appId}/public/data/settings`, 'theme');
+            await setDoc(themeDocRef, { name: e.target.value });
+        });
+
+        // --- Inisialisasi Aplikasi ---
+        initializeAppWithFirebase();
+    </script>
+</body>
+</html>
+
